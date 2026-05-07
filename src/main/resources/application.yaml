@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: backend-api-server
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/backend_api}
+    username: ${DB_USERNAME:backend_user}
+    password: ${DB_PASSWORD:backend_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
