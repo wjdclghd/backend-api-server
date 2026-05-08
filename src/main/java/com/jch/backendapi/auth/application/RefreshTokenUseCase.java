@@ -37,13 +37,18 @@ public class RefreshTokenUseCase {
         this.tokenProvider = tokenProvider;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AuthException.class)
     public LoginResponse execute(RefreshTokenRequest request) {
         String refreshTokenHash = refreshTokenHasher.hash(request.refreshToken());
         RefreshToken currentRefreshToken = refreshTokenRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new AuthException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        if (currentRefreshToken.isRevoked() || currentRefreshToken.isExpired(Instant.now())) {
+        if (currentRefreshToken.isRevoked()) {
+            refreshTokenRepository.revokeActiveByUserId(currentRefreshToken.userId());
+            throw new AuthException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        if (currentRefreshToken.isExpired(Instant.now())) {
             throw new AuthException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 

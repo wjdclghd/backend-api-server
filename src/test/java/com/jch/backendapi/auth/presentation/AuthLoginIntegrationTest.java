@@ -3,6 +3,7 @@ package com.jch.backendapi.auth.presentation;
 import com.jch.backendapi.token.infrastructure.RefreshTokenJpaEntity;
 import com.jch.backendapi.token.infrastructure.RefreshTokenJpaRepository;
 import com.jch.backendapi.token.port.RefreshTokenHasher;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,9 @@ class AuthLoginIntegrationTest {
 
     @Autowired
     private RefreshTokenHasher refreshTokenHasher;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void loginReturnsTokensAfterSignup() throws Exception {
@@ -99,6 +103,33 @@ class AuthLoginIntegrationTest {
         assertNotEquals(oldAccessToken, newAccessToken);
         assertNotEquals(oldRefreshToken, newRefreshToken);
         assertTrue(!newSavedRefreshToken.isRevoked());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refreshToken": "%s"
+                                }
+                                """.formatted(oldRefreshToken)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_INVALID_REFRESH_TOKEN"));
+
+        entityManager.clear();
+        RefreshTokenJpaEntity revokedNewSavedRefreshToken = refreshTokenJpaRepository
+                .findByRefreshTokenHash(refreshTokenHasher.hash(newRefreshToken))
+                .orElseThrow();
+
+        assertTrue(revokedNewSavedRefreshToken.isRevoked());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refreshToken": "%s"
+                                }
+                                """.formatted(newRefreshToken)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_INVALID_REFRESH_TOKEN"));
     }
 
     @Test

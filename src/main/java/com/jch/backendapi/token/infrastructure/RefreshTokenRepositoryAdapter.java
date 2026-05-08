@@ -35,6 +35,11 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
+    public long revokeActiveByUserId(Long userId) {
+        return refreshTokenJpaRepository.revokeActiveByUserId(userId);
+    }
+
+    @Override
     public long deleteExpiredOrRevoked(Instant now) {
         return refreshTokenJpaRepository.deleteByExpiresAtBeforeOrIsRevokedTrue(now);
     }

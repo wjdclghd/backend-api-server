@@ -4,10 +4,15 @@ import com.jch.backendapi.auth.application.LoginUseCase;
 import com.jch.backendapi.auth.application.LogoutUseCase;
 import com.jch.backendapi.auth.application.RefreshTokenUseCase;
 import com.jch.backendapi.auth.application.SignupUseCase;
+import com.jch.backendapi.global.config.RateLimitProperties;
 import com.jch.backendapi.global.error.GlobalExceptionHandler;
+import com.jch.backendapi.global.security.EndpointRateLimiter;
+import com.jch.backendapi.global.security.InMemoryRateLimiter;
 import com.jch.backendapi.global.security.PasswordHasher;
+import com.jch.backendapi.global.security.RequestClientIpExtractor;
 import com.jch.backendapi.token.domain.AuthToken;
 import com.jch.backendapi.token.domain.RefreshToken;
+import com.jch.backendapi.token.domain.TokenAuthentication;
 import com.jch.backendapi.token.port.RefreshTokenHasher;
 import com.jch.backendapi.token.port.RefreshTokenRepository;
 import com.jch.backendapi.token.port.TokenProvider;
@@ -102,7 +107,18 @@ class AuthControllerTest {
                 new StubTokenProvider()
         );
         LogoutUseCase logoutUseCase = new LogoutUseCase(new StubRefreshTokenHasher(), new FakeRefreshTokenRepository());
-        AuthController authController = new AuthController(signupUseCase, loginUseCase, refreshTokenUseCase, logoutUseCase);
+        EndpointRateLimiter endpointRateLimiter = new EndpointRateLimiter(
+                new InMemoryRateLimiter(),
+                new RequestClientIpExtractor(),
+                new RateLimitProperties()
+        );
+        AuthController authController = new AuthController(
+                signupUseCase,
+                loginUseCase,
+                refreshTokenUseCase,
+                logoutUseCase,
+                endpointRateLimiter
+        );
         return MockMvcBuilders
                 .standaloneSetup(authController)
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -168,6 +184,11 @@ class AuthControllerTest {
         public AuthToken issueRefreshToken(User user) {
             return new AuthToken("refresh-token", Instant.now().plusSeconds(1209600));
         }
+
+        @Override
+        public Optional<TokenAuthentication> authenticateAccessToken(String accessToken) {
+            return Optional.empty();
+        }
     }
 
     private static class StubRefreshTokenHasher implements RefreshTokenHasher {
@@ -188,6 +209,11 @@ class AuthControllerTest {
         @Override
         public Optional<RefreshToken> findByRefreshTokenHash(String refreshTokenHash) {
             return Optional.empty();
+        }
+
+        @Override
+        public long revokeActiveByUserId(Long userId) {
+            return 0;
         }
 
         @Override

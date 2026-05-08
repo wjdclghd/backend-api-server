@@ -7,6 +7,7 @@ import com.jch.backendapi.global.error.ErrorCode;
 import com.jch.backendapi.global.security.PasswordHasher;
 import com.jch.backendapi.token.domain.AuthToken;
 import com.jch.backendapi.token.domain.RefreshToken;
+import com.jch.backendapi.token.domain.TokenAuthentication;
 import com.jch.backendapi.token.port.RefreshTokenHasher;
 import com.jch.backendapi.token.port.RefreshTokenRepository;
 import com.jch.backendapi.token.port.TokenProvider;
@@ -179,6 +180,11 @@ class LoginUseCaseTest {
         public AuthToken issueRefreshToken(User user) {
             return new AuthToken("refresh-token", Instant.now().plusSeconds(1209600));
         }
+
+        @Override
+        public Optional<TokenAuthentication> authenticateAccessToken(String accessToken) {
+            return Optional.empty();
+        }
     }
 
     private static class StubRefreshTokenHasher implements RefreshTokenHasher {
@@ -202,6 +208,11 @@ class LoginUseCaseTest {
         @Override
         public Optional<RefreshToken> findByRefreshTokenHash(String refreshTokenHash) {
             return Optional.ofNullable(savedRefreshToken);
+        }
+
+        @Override
+        public long revokeActiveByUserId(Long userId) {
+            return 0;
         }
 
         @Override

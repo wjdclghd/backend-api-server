@@ -11,5 +11,7 @@ public interface RefreshTokenRepository {
 
     Optional<RefreshToken> findByRefreshTokenHash(String refreshTokenHash);
 
+    long revokeActiveByUserId(Long userId);
+
     long deleteExpiredOrRevoked(Instant now);
 }
