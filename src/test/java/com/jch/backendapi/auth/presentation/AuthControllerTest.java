@@ -1,8 +1,12 @@
 package com.jch.backendapi.auth.presentation;
 
 import com.jch.backendapi.auth.application.SignupUseCase;
+import com.jch.backendapi.global.config.RateLimitProperties;
 import com.jch.backendapi.global.error.GlobalExceptionHandler;
+import com.jch.backendapi.global.security.EndpointRateLimiter;
+import com.jch.backendapi.global.security.InMemoryRateLimiter;
 import com.jch.backendapi.global.security.PasswordHasher;
+import com.jch.backendapi.global.security.RequestClientIpExtractor;
 import com.jch.backendapi.user.domain.User;
 import com.jch.backendapi.user.port.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -79,7 +83,12 @@ class AuthControllerTest {
     private MockMvc createMockMvc(FakeUserRepository userRepository) {
         StubPasswordHasher passwordHasher = new StubPasswordHasher();
         SignupUseCase signupUseCase = new SignupUseCase(userRepository, passwordHasher);
-        AuthController authController = new AuthController(signupUseCase);
+        EndpointRateLimiter endpointRateLimiter = new EndpointRateLimiter(
+                new InMemoryRateLimiter(),
+                new RequestClientIpExtractor(),
+                new RateLimitProperties()
+        );
+        AuthController authController = new AuthController(signupUseCase, endpointRateLimiter);
         return MockMvcBuilders
                 .standaloneSetup(authController)
                 .setControllerAdvice(new GlobalExceptionHandler())
