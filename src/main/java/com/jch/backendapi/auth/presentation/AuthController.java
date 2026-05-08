@@ -1,6 +1,12 @@
 package com.jch.backendapi.auth.presentation;
 
+import com.jch.backendapi.auth.application.LoginUseCase;
+import com.jch.backendapi.auth.application.LogoutUseCase;
+import com.jch.backendapi.auth.application.RefreshTokenUseCase;
 import com.jch.backendapi.auth.application.SignupUseCase;
+import com.jch.backendapi.auth.dto.LoginRequest;
+import com.jch.backendapi.auth.dto.LoginResponse;
+import com.jch.backendapi.auth.dto.RefreshTokenRequest;
 import com.jch.backendapi.auth.dto.SignupRequest;
 import com.jch.backendapi.auth.dto.SignupResponse;
 import jakarta.validation.Valid;
@@ -16,14 +22,41 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final SignupUseCase signupUseCase;
+    private final LoginUseCase loginUseCase;
+    private final RefreshTokenUseCase refreshTokenUseCase;
+    private final LogoutUseCase logoutUseCase;
 
-    public AuthController(SignupUseCase signupUseCase) {
+    public AuthController(
+            SignupUseCase signupUseCase,
+            LoginUseCase loginUseCase,
+            RefreshTokenUseCase refreshTokenUseCase,
+            LogoutUseCase logoutUseCase
+    ) {
         this.signupUseCase = signupUseCase;
+        this.loginUseCase = loginUseCase;
+        this.refreshTokenUseCase = refreshTokenUseCase;
+        this.logoutUseCase = logoutUseCase;
     }
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public SignupResponse signup(@Valid @RequestBody SignupRequest request) {
         return signupUseCase.execute(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return loginUseCase.execute(request);
+    }
+
+    @PostMapping("/refresh")
+    public LoginResponse refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        return refreshTokenUseCase.execute(request);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@Valid @RequestBody RefreshTokenRequest request) {
+        logoutUseCase.execute(request);
     }
 }

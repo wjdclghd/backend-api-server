@@ -12,3 +12,9 @@ spring:
     properties:
       hibernate:
         format_sql: false
+
+jwt:
+  issuer: backend-api-server-test
+  secret: test-jwt-secret-must-be-longer-than-32bytes
+  access-token-expiration-seconds: 900
+  refresh-token-expiration-seconds: 1209600
