@@ -42,8 +42,13 @@ class LoginUseCaseTest {
 
         LoginResponse response = loginUseCase.execute(request);
 
-        assertEquals("access-token", response.accessToken());
-        assertEquals("refresh-token", response.refreshToken());
+        assertEquals("access-token", response.token().accessToken());
+        assertEquals("refresh-token", response.token().refreshToken());
+        assertEquals(1L, response.user().userId());
+        assertEquals("test@example.com", response.user().email());
+        assertEquals("jch", response.user().nickname());
+        assertEquals(UserRole.USER, response.user().role());
+        assertEquals(UserStatus.ACTIVE, response.user().status());
         assertEquals("test@example.com", userRepository.requestedEmail);
         assertEquals("hashed-refresh-token", refreshTokenRepository.savedRefreshToken.refreshTokenHash());
         assertNotEquals("refresh-token", refreshTokenRepository.savedRefreshToken.refreshTokenHash());

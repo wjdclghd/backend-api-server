@@ -1,7 +1,9 @@
 package com.jch.backendapi.auth.application;
 
+import com.jch.backendapi.auth.dto.AuthUserResponse;
 import com.jch.backendapi.auth.dto.LoginResponse;
 import com.jch.backendapi.auth.dto.RefreshTokenRequest;
+import com.jch.backendapi.auth.dto.TokenResponse;
 import com.jch.backendapi.global.error.AuthException;
 import com.jch.backendapi.global.error.ErrorCode;
 import com.jch.backendapi.token.domain.AuthToken;
@@ -67,10 +69,19 @@ public class RefreshTokenUseCase {
         refreshTokenRepository.save(RefreshToken.issue(user.id(), newRefreshTokenHash, refreshToken.expiresAt()));
 
         return new LoginResponse(
-                accessToken.value(),
-                refreshToken.value(),
-                accessToken.expiresAt(),
-                refreshToken.expiresAt()
+                new TokenResponse(
+                        accessToken.value(),
+                        refreshToken.value(),
+                        accessToken.expiresAt(),
+                        refreshToken.expiresAt()
+                ),
+                new AuthUserResponse(
+                        user.id(),
+                        user.email(),
+                        user.nickname(),
+                        user.role(),
+                        user.status()
+                )
         );
     }
 }

@@ -1,7 +1,9 @@
 package com.jch.backendapi.auth.application;
 
+import com.jch.backendapi.auth.dto.AuthUserResponse;
 import com.jch.backendapi.auth.dto.LoginRequest;
 import com.jch.backendapi.auth.dto.LoginResponse;
+import com.jch.backendapi.auth.dto.TokenResponse;
 import com.jch.backendapi.global.error.AuthException;
 import com.jch.backendapi.global.error.ErrorCode;
 import com.jch.backendapi.global.security.PasswordHasher;
@@ -64,10 +66,19 @@ public class LoginUseCase {
         refreshTokenRepository.save(RefreshToken.issue(user.id(), refreshTokenHash, refreshToken.expiresAt()));
 
         return new LoginResponse(
-                accessToken.value(),
-                refreshToken.value(),
-                accessToken.expiresAt(),
-                refreshToken.expiresAt()
+                new TokenResponse(
+                        accessToken.value(),
+                        refreshToken.value(),
+                        accessToken.expiresAt(),
+                        refreshToken.expiresAt()
+                ),
+                new AuthUserResponse(
+                        user.id(),
+                        user.email(),
+                        user.nickname(),
+                        user.role(),
+                        user.status()
+                )
         );
     }
 

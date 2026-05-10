@@ -55,10 +55,14 @@ class AuthLoginIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken", not(blankOrNullString())))
-                .andExpect(jsonPath("$.refreshToken", not(blankOrNullString())))
-                .andExpect(jsonPath("$.accessTokenExpiresAt", not(blankOrNullString())))
-                .andExpect(jsonPath("$.refreshTokenExpiresAt", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.accessToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.refreshToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.accessTokenExpiresAt", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.refreshTokenExpiresAt", not(blankOrNullString())))
+                .andExpect(jsonPath("$.user.email").value("login-integration@example.com"))
+                .andExpect(jsonPath("$.user.nickname").value("jch"))
+                .andExpect(jsonPath("$.user.role").value("USER"))
+                .andExpect(jsonPath("$.user.status").value("ACTIVE"))
                 .andReturn();
 
         String refreshToken = extractRefreshToken(result.getResponse().getContentAsString());
@@ -85,8 +89,10 @@ class AuthLoginIntegrationTest {
                                 }
                                 """.formatted(oldRefreshToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken", not(blankOrNullString())))
-                .andExpect(jsonPath("$.refreshToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.accessToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.token.refreshToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.user.email").value("refresh-integration@example.com"))
+                .andExpect(jsonPath("$.user.nickname").value("jch"))
                 .andReturn();
 
         String newAccessToken = extractAccessToken(refreshResult.getResponse().getContentAsString());
