@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: backend-api-server
+
+  profiles:
+    default: local
+
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+jwt:
+  issuer: ${JWT_ISSUER:backend-api-server}
+  secret: ${JWT_SECRET:local-development-jwt-secret-must-be-changed-32bytes}
+  access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:900}
+  refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:1209600}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,X-Requested-With}
+    max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
+
+rate-limit:
+  signup:
+    ip-capacity: ${SIGNUP_IP_RATE_LIMIT_CAPACITY:10}
+    ip-window-seconds: ${SIGNUP_IP_RATE_LIMIT_WINDOW_SECONDS:60}
+    key-capacity: ${SIGNUP_EMAIL_RATE_LIMIT_CAPACITY:3}
+    key-window-seconds: ${SIGNUP_EMAIL_RATE_LIMIT_WINDOW_SECONDS:3600}
+  login:
+    ip-capacity: ${LOGIN_IP_RATE_LIMIT_CAPACITY:20}
+    ip-window-seconds: ${LOGIN_IP_RATE_LIMIT_WINDOW_SECONDS:60}
+    key-capacity: ${LOGIN_EMAIL_RATE_LIMIT_CAPACITY:5}
+    key-window-seconds: ${LOGIN_EMAIL_RATE_LIMIT_WINDOW_SECONDS:900}
+  refresh:
+    ip-capacity: ${REFRESH_IP_RATE_LIMIT_CAPACITY:60}
+    ip-window-seconds: ${REFRESH_IP_RATE_LIMIT_WINDOW_SECONDS:60}
+    key-capacity: ${REFRESH_TOKEN_RATE_LIMIT_CAPACITY:10}
+    key-window-seconds: ${REFRESH_TOKEN_RATE_LIMIT_WINDOW_SECONDS:60}
+  logout:
+    ip-capacity: ${LOGOUT_IP_RATE_LIMIT_CAPACITY:60}
+    ip-window-seconds: ${LOGOUT_IP_RATE_LIMIT_WINDOW_SECONDS:60}
+    key-capacity: ${LOGOUT_TOKEN_RATE_LIMIT_CAPACITY:10}
+    key-window-seconds: ${LOGOUT_TOKEN_RATE_LIMIT_WINDOW_SECONDS:60}
