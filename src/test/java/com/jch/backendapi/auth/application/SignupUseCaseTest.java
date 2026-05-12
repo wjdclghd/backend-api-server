@@ -12,6 +12,7 @@ import com.jch.backendapi.user.port.UserRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -74,6 +75,16 @@ class SignupUseCaseTest {
         @Override
         public boolean existsByEmail(String email) {
             return isEmailExists;
+        }
+
+        @Override
+        public Optional<User> findById(Long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findByEmail(String email) {
+            return Optional.empty();
         }
     }
 

@@ -1,5 +1,8 @@
 package com.jch.backendapi.auth.presentation;
 
+import com.jch.backendapi.auth.application.LoginUseCase;
+import com.jch.backendapi.auth.application.LogoutUseCase;
+import com.jch.backendapi.auth.application.RefreshTokenUseCase;
 import com.jch.backendapi.auth.application.SignupUseCase;
 import com.jch.backendapi.global.config.RateLimitProperties;
 import com.jch.backendapi.global.error.GlobalExceptionHandler;
@@ -7,6 +10,12 @@ import com.jch.backendapi.global.security.EndpointRateLimiter;
 import com.jch.backendapi.global.security.InMemoryRateLimiter;
 import com.jch.backendapi.global.security.PasswordHasher;
 import com.jch.backendapi.global.security.RequestClientIpExtractor;
+import com.jch.backendapi.token.domain.AuthToken;
+import com.jch.backendapi.token.domain.RefreshToken;
+import com.jch.backendapi.token.domain.TokenAuthentication;
+import com.jch.backendapi.token.port.RefreshTokenHasher;
+import com.jch.backendapi.token.port.RefreshTokenRepository;
+import com.jch.backendapi.token.port.TokenProvider;
 import com.jch.backendapi.user.domain.User;
 import com.jch.backendapi.user.port.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -15,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -83,12 +93,32 @@ class AuthControllerTest {
     private MockMvc createMockMvc(FakeUserRepository userRepository) {
         StubPasswordHasher passwordHasher = new StubPasswordHasher();
         SignupUseCase signupUseCase = new SignupUseCase(userRepository, passwordHasher);
+        LoginUseCase loginUseCase = new LoginUseCase(
+                userRepository,
+                passwordHasher,
+                new StubTokenProvider(),
+                new StubRefreshTokenHasher(),
+                new FakeRefreshTokenRepository()
+        );
+        RefreshTokenUseCase refreshTokenUseCase = new RefreshTokenUseCase(
+                new StubRefreshTokenHasher(),
+                new FakeRefreshTokenRepository(),
+                userRepository,
+                new StubTokenProvider()
+        );
+        LogoutUseCase logoutUseCase = new LogoutUseCase(new StubRefreshTokenHasher(), new FakeRefreshTokenRepository());
         EndpointRateLimiter endpointRateLimiter = new EndpointRateLimiter(
                 new InMemoryRateLimiter(),
                 new RequestClientIpExtractor(),
                 new RateLimitProperties()
         );
-        AuthController authController = new AuthController(signupUseCase, endpointRateLimiter);
+        AuthController authController = new AuthController(
+                signupUseCase,
+                loginUseCase,
+                refreshTokenUseCase,
+                logoutUseCase,
+                endpointRateLimiter
+        );
         return MockMvcBuilders
                 .standaloneSetup(authController)
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -118,6 +148,16 @@ class AuthControllerTest {
         public boolean existsByEmail(String email) {
             return isEmailExists;
         }
+
+        @Override
+        public Optional<User> findById(Long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findByEmail(String email) {
+            return Optional.empty();
+        }
     }
 
     private static class StubPasswordHasher implements PasswordHasher {
@@ -130,6 +170,55 @@ class AuthControllerTest {
         @Override
         public boolean matches(String rawPassword, String passwordHash) {
             return passwordHash.equals(hash(rawPassword));
+        }
+    }
+
+    private static class StubTokenProvider implements TokenProvider {
+
+        @Override
+        public AuthToken issueAccessToken(User user) {
+            return new AuthToken("access-token", Instant.now().plusSeconds(900));
+        }
+
+        @Override
+        public AuthToken issueRefreshToken(User user) {
+            return new AuthToken("refresh-token", Instant.now().plusSeconds(1209600));
+        }
+
+        @Override
+        public Optional<TokenAuthentication> authenticateAccessToken(String accessToken) {
+            return Optional.empty();
+        }
+    }
+
+    private static class StubRefreshTokenHasher implements RefreshTokenHasher {
+
+        @Override
+        public String hash(String refreshToken) {
+            return "hashed-" + refreshToken;
+        }
+    }
+
+    private static class FakeRefreshTokenRepository implements RefreshTokenRepository {
+
+        @Override
+        public RefreshToken save(RefreshToken refreshToken) {
+            return refreshToken;
+        }
+
+        @Override
+        public Optional<RefreshToken> findByRefreshTokenHash(String refreshTokenHash) {
+            return Optional.empty();
+        }
+
+        @Override
+        public long revokeActiveByUserId(Long userId) {
+            return 0;
+        }
+
+        @Override
+        public long deleteExpiredOrRevoked(Instant now) {
+            return 0;
         }
     }
 }

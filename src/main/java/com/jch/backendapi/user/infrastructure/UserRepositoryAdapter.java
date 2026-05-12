@@ -4,6 +4,8 @@ import com.jch.backendapi.user.domain.User;
 import com.jch.backendapi.user.port.UserRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class UserRepositoryAdapter implements UserRepository {
 
@@ -25,5 +27,17 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        return userJpaRepository.findById(id)
+                .map(userJpaEntityMapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userJpaRepository.findByEmail(email)
+                .map(userJpaEntityMapper::toDomain);
     }
 }
